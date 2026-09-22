@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meus Gastos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --blue: #3d6fd6;
+    --blue-deep: #2e56ab;
+    --blue-soft: #dde6f8;
+    --bg: #ffffff;
+    --card: #ffffff;
+    --ink: #1c2430;
+    --ink-soft: #626e7c;
+    --ink-faint: #9aa4b0;
+    --line: #e2e7ee;
+    --expense: #c74a3a;
+    --ok: #2e8f5c;
+    --shadow: 0 1px 2px rgba(28, 36, 48, 0.06), 0 8px 24px rgba(28, 36, 48, 0.06);
+    --radius: 18px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --blue: #7fa6ec; --blue-deep: #9ec0f5; --blue-soft: #223350;
+      --bg: #14171c; --card: #1c2027; --ink: #eef1f5; --ink-soft: #a9b2bd; --ink-faint: #707b88;
+      --line: #2c313a; --expense: #e2897a; --ok: #6fca97;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --blue: #7fa6ec; --blue-deep: #9ec0f5; --blue-soft: #223350;
+    --bg: #14171c; --card: #1c2027; --ink: #eef1f5; --ink-soft: #a9b2bd; --ink-faint: #707b88;
+    --line: #2c313a; --expense: #e2897a; --ok: #6fca97;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  h1, h2, h3 { font-family: "Fraunces", Georgia, serif; }
+
+  .app { max-width: 640px; margin: 0 auto; padding: 20px 16px 64px; }
+
+  header.top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 18px; }
+  header.top .brand { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue-deep); font-weight: 600; }
+  header.top h1 { margin: 2px 0 0; font-size: 22px; font-weight: 600; }
+  .theme-toggle {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+    border-radius: 999px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+  .whoami { padding: 10px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--ink-soft); }
+  .whoami button { background: none; border: none; color: var(--blue-deep); font-weight: 600; cursor: pointer; font-size: 12.5px; padding: 2px 4px; }
+
+  .composer { padding: 16px; margin-bottom: 16px; }
+  .composer label.hint { display: block; font-size: 12.5px; color: var(--ink-faint); margin-bottom: 8px; }
+  .composer-row { display: flex; gap: 8px; align-items: flex-end; }
+  textarea#gastoInput {
+    flex: 1; resize: none; border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 14px;
+    font-family: inherit; font-size: 15px; color: var(--ink); background: var(--bg); min-height: 46px; max-height: 140px; line-height: 1.4;
+  }
+  textarea#gastoInput:focus { outline: none; border-color: var(--blue); }
+  button.send {
+    background: var(--blue); color: #fff; border: none; border-radius: 14px; width: 46px; height: 46px;
+    flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  button.send:disabled { opacity: 0.45; cursor: default; }
+  button.send:not(:disabled):active { transform: scale(0.96); }
+  .examples { margin-top: 10px; font-size: 12px; color: var(--ink-faint); }
+
+  .confirm { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+  .confirm .status-line { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 10px; }
+  .confirm .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 11.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input, .field select {
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 9px 10px; font-family: inherit; font-size: 14.5px; color: var(--ink); background: var(--bg);
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--blue); }
+  .field.error input { border-color: var(--expense); }
+  .field-error-msg { font-size: 11px; color: var(--expense); }
+
+  .confirm-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .btn { border-radius: 12px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; }
+  .btn-primary { background: var(--blue); color: #fff; flex: 1; }
+  .btn-primary:disabled { opacity: 0.45; cursor: default; }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border: 1.5px solid var(--line); }
+  .toast { font-size: 13px; color: var(--ok); margin-top: 10px; display: none; }
+  .toast.show { display: block; }
+
+  .hero { padding: 20px 18px; margin-bottom: 14px; }
+  .hero .row-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .month-select { border: 1px solid var(--line); background: var(--bg); color: var(--ink-soft); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; font-family: inherit; }
+  .hero .label { font-size: 12.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+  .hero .amount { font-size: 34px; font-weight: 600; margin: 4px 0 0; color: var(--ink); }
+  .hero .sub { font-size: 12.5px; color: var(--ink-faint); margin-top: 4px; }
+
+  .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); margin: 22px 4px 10px; }
+
+  .breakdown { padding: 14px 16px; }
+  .cat-row { padding: 9px 0; }
+  .cat-row .cat-top { display: flex; justify-content: space-between; -shadow: var(--shadow); }
+  .name-modal h3 { margin: 0 0 6px; font-size: 17px; }
+  .name-modal p { margin: 0 0 12px; font-size: 13px; color: var(--ink-soft); }
+  .name-modal input { width: 100%; border: 1.5px solid var(--line); border-radius: 10px; padding: 10px; font-size: 14.5px; font-family: inherit; background: var(--bg); color: var(--ink); }
+  .name-modal button { margin-top: 12px; width: 100%; }
+
+  @media (max-width: 420px) {
+    .hero .amount { font-size: 28px; }
+    .confirm .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="name-modal-backdrop" id="nameModal">
+  <div class="name-modal">
+    <h3>Quem está lançando?</h3>
+    <p>Só pra identificar cada gasto no histórico. Fica salvo neste aparelho.</p>
+    <input type="text" id="nameInput" placeholder="Seu nome" maxlength="40" />
+    <button class="btn btn-primary" id="nameSaveBtn">Continuar</button>
+  </div>
+</div>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <div class="brand">Pessoal</div>
+      <h1>Meus Gastos</h1>
+    </div>
+    <button class="theme-toggle" id="themeToggle" title="Alternar tema" aria-label="Alternar tema">◐</button>
+  </header>
+
+  <div class="card whoami">
+    <span>Lançando como <strong id="whoamiName">—</strong></span>
+    <button id="changeNameBtn">trocar</button>
+  </div>
+
+  <div class="card composer">
+    <label class="hint" for="gastoInput">Escreva o gasto do jeito que fala — o sistema identifica valor e categoria sozinho.</label>
+    <div class="composer-row">
+      <textarea id="gastoInput" rows="1" placeholder="Ex: mercado 380 no cartão"></textarea>
+      <button class="send" id="sendBtn" aria-label="Registrar gasto">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 12h15M13 6l6 6-6 6" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="examples">ex.: "uber 32,50", "farmácia 89", "netflix 44,90", "gasolina 150"</div>
+
+    <div class="confirm" id="confirmBox" style="display:none;">
+      <div class="status-line" id="statusLine">Confira e salve:</div>
+      <div class="grid">
+        <div class="field" id="fieldValor">
+          <label>Valor (R$)</label>
+          <input type="number" step="0.01" min="0" id="inValor" placeholder="0,00" />
+          <div class="field-error-msg" id="valorErr" style="display:none;">Informe o valor</div>
+        </div>
+        <div class="field">
+          <label>Categoria</label>
+          <select id="inCategoria"></select>
+        </div>
+        <div class="field full">
+          <label>Descrição</label>
+          <input type="text" id="inDescricao" maxlength="80" />
+        </div>
+        <div class="field">
+          <label>Data</label>
+          <input type="date" id="inData" />
+        </div>
+      </div>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+        <button class="btn btn-primary" id="saveBtn">Salvar gasto</button>
+      </div>
+      <div class="toast" id="toast">Gasto registrado ✓</div>
+    </div>
+  </div>
+
+  <div class="card hero">
+    <div class="row-top">
+      <div>
+        <div class="label">Total gasto</div>
+        <div class="amount" id="heroTotal">R$ 0,00</div>
+        <div class="sub" id="heroSub">carregando…</div>
+      </div>
+      <select class="month-select" id="monthSelect"></select>
+    </div>
+  </div>
+
+  <div class="section-title">Por categoria</div>
+  <div class="card breakdown" id="breakdownBox"><div class="empty-state">Sem gastos neste período ainda.</div></div>
+
+  <div class="section-title">Lançamentos</div>
+  <div class="card ledger" id="ledgerBox"><div class="empty-state">Nenhum gasto registrado ainda. Escreva o primeiro acima ↑</div></div>
+
+  <div class="foot-note">Link pessoal — qualquer pessoa com o link pode ver e lançar gastos.<br/>Não compartilhe.</div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const CATEGORIES = [
+    "Moradia", "Alimentação", "Transporte", "Saúde",
+    "Lazer e Assinaturas", "Educação", "Roupas e Compras", "Impostos e Taxas", "Outros",
+  ];
+
+  const CAT_STYLE = {
+    "Moradia": { bg: "#f1e6c6", fg: "#8a6d1f" },
+    "Alimentação": { bg: "#f5e1da", fg: "#a65a3e" },
+    "Transporte": { bg: "#e2e8f2", fg: "#4c5c82" },
+    "Saúde": { bg: "#dcf2e6", fg: "#2e8c5c" },
+    "Lazer e Assinaturas": { bg: "#f1e2f0", fg: "#8a4c82" },
+    "Educação": { bg: "#dcedf2", fg: "#2e7a8c" },
+    "Roupas e Compras": { bg: "#f2e9dc", fg: "#8c6a2e" },
+    "Impostos e Taxas": { bg: "#f2dcdc", fg: "#8c2e2e" },
+    "Outros": { bg: "#e9e4dc", fg: "#6b5f52" },
+  };
+  const CAT_STYLE_DARK = {
+    "Moradia": { bg: "#3d3320", fg: "#e0c876" },
+    "Alimentação": { bg: "#3d2c26", fg: "#e3a98c" },
+    "Transporte": { bg: "#262c3d", fg: "#a9b8e0" },
+    "Saúde": { bg: "#1f3d2c", fg: "#7fdba9" },
+    "Lazer e Assinaturas": { bg: "#3a2838", fg: "#e0a9d6" },
+    "Educação": { bg: "#1f363d", fg: "#8fd6e6" },
+    "Roupas e Compras": { bg: "#3a331f", fg: "#e0c58f" },
+    "Impostos e Taxas": { bg: "#3d2626", fg: "#e6a3a3" },
+    "Outros": { bg: "#312c24", fg: "#c9bda8" },
+  };
+
+  // Keyword-based classifier — runs fully client-side, no AI call, no extra cost.
+  const KEYWORDS = {
+    "Moradia": ["aluguel", "condominio", "condomínio", "financiamento", "iptu", "reforma da casa"],
+    "Alimentação": ["mercado", "supermercado", "restaurante", "almoco", "almoço", "jantar", "lanche", "ifood", "padaria", "feira", "acougue", "açougue"],
+    "Transporte": ["uber", "gasolina", "combustivel", "combustível", "estacionamento", "onibus", "ônibus", "carro", "manutencao do carro", "pedagio", "pedágio", "99 "],
+    "Saúde": ["farmacia", "farmácia", "remedio", "remédio", "medico", "médico", "plano de saude", "plano de saúde", "dentista", "consulta", "exame"],
+    "Lazer e Assinaturas": ["netflix", "spotify", "cinema", "viagem", "streaming", "amazon prime", "hbo", "disney", "bar ", "show", "passeio"],
+    "Educação": ["curso", "faculdade", "mensalidade escolar", "livro", "material escolar"],
+    "Roupas e Compras": ["roupa", "sapato", "tenis", "tênis", "loja", "shopping", "presente"],
+    "Impostos e Taxas": ["imposto", "taxa", "das ", "ir ", "irpf", "inss", "contador"],
+  };
+
+  function normalize(s) {
+    return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+
+  function guessCategory(text) {
+    const norm = normalize(text);
+    for (const cat of Object.keys(KEYWORDS)) {
+      for (const kw of KEYWORDS[cat]) {
+        if (!kw) continue;
+        if (norm.includes(normalize(kw))) return cat;
+      }
+    }
+    return "Outros";
+  }
+
+  function guessValor(text) {
+    const matches = String(text).match(/\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:,\d{1,2})?/g);
+    if (!matches || !matches.length) return null;
+    const nums = matches.map((m) => {
+      const cleaned = m.replace(/\./g, "").replace(",", ".");
+      const n = parseFloat(cleaned);
+      return isNaN(n) ? null : n;
+    }).filter((n) => n !== null);
+    if (!nums.length) return null;
+    return Math.max(...nums);
+  }
+
+  const fmtBRL = (n) => "R$ " + (Number(n) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const todayISO = () => new Date().toISOString().slice(0, 10);
+  const monthKey = (iso) => (iso || "").slice(0, 7);
+  const MONTH_NAMES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  const monthLabel = (key) => { const [y, m] = key.split("-").map(Number); return MONTH_NAMES[m - 1] + " de " + y; };
+  const dayLabel = (iso) => { const d = new Date(String(iso).slice(0, 10) + "T00:00:00"); return String(d.getDate()).padStart(2,"0") + " de " + MONTH_NAMES[d.getMonth()]; };
+  const isDark = () => {
+    const t = document.documentElement.getAttribute("data-theme");
+    if (t === "dark") return true;
+    if (t === "light") return false;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  };
+  const catStyle = (cat) => (isDark() ? CAT_STYLE_DARK : CAT_STYLE)[cat] || (isDark() ? CAT_STYLE_DARK["Outros"] : CAT_STYLE["Outros"]);
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // Theme toggle
+  const themeBtn = document.getElementById("themeToggle");
+  try {
+    const saved = localStorage.getItem("gastosPessoalTheme");
+    if (saved === "dark" || saved === "light") document.documentElement.setAttribute("data-theme", saved);
+  } catch (e) {}
+  themeBtn.addEventListener("click", () => {
+    const cur = document.documentElement.getAttribute("data-theme");
+    const next = cur === "dark" ? "light" : cur === "light" ? null : (isDark() ? "light" : "dark");
+    if (next) document.documentElement.setAttribute("data-theme", next); else document.documentElement.removeAttribute("data-theme");
+    try { if (next) localStorage.setItem("gastosPessoalTheme", next); else localStorage.removeItem("gastosPessoalTheme"); } catch (e) {}
+    render();
+  });
+
+  // Name / identity (local, not real auth — just attribution courtesy)
+  const nameModal = document.getElementById("nameModal");
+  const nameInput = document.getElementById("nameInput");
+  const nameSaveBtn = document.getElementById("nameSaveBtn");
+  const whoamiName = document.getElementById("whoamiName");
+  let myName = "";
+  try { myName = localStorage.getItem("gastosPessoalNome") || ""; } catch (e) {}
+  function showNameModal() { nameInput.value = myName || ""; nameModal.classList.add("show"); nameInput.focus(); }
+  function hideNameModal() { nameModal.classList.remove("show"); }
+  nameSaveBtn.addEventListener("click", () => {
+    const v = nameInput.value.trim().slice(0, 40);
+    if (!v) return;
+    myName = v;
+    try { localStorage.setItem("gastosPessoalNome", v); } catch (e) {}
+    whoamiName.textContent = myName;
+    hideNameModal();
+  });
+  nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") nameSaveBtn.click(); });
+  document.getElementById("changeNameBtn").addEventListener("click", showNameModal);
+  if (myName) whoamiName.textContent = myName; else showNameModal();
+
+  // Category select
+  const catSelect = document.getElementById("inCategoria");
+  CATEGORIES.forEach((c) => { const o = document.createElement("option"); o.value = c; o.textContent = c; catSelect.appendChild(o); });
+
+  let entries = [];
+  let selectedMonth = "current";
+
+  const gastoInput = document.getElementById("gastoInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const confirmBox = document.getElementById("confirmBox");
+  const statusLine = document.getElementById("statusLine");
+  const inValor = document.getElementById("inValor");
+  const inDescricao = document.getElementById("inDescricao");
+  const inData = document.getElementById("inData");
+  const fieldValor = document.getElementById("fieldValor");
+  const valorErr = document.getElementById("valorErr");
+  const saveBtn = document.getElementById("saveBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const toast = document.getElementById("toast");
+  const monthSelect = document.getElementById("monthSelect");
+
+  gastoInput.addEventListener("input", () => {
+    gastoInput.style.height = "auto";
+    gastoInput.style.height = Math.min(140, gastoInput.scrollHeight) + "px";
+  });
+  gastoInput.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } });
+  sendBtn.addEventListener("click", handleSend);
+  cancelBtn.addEventListener("click", resetComposer);
+  inValor.addEventListener("input", () => {
+    const v = parseFloat(inValor.value);
+    const ok = !isNaN(v) && v > 0;
+    saveBtn.disabled = !ok;
+    fieldValor.classList.toggle("error", inValor.value !== "" && !ok);
+    valorErr.style.display = inValor.value !== "" && !ok ? "block" : "none";
+  });
+
+  function resetComposer() {
+    confirmBox.style.display = "none";
+    gastoInput.value = "";
+    gastoInput.style.height = "auto";
+    gastoInput.focus();
+    toast.classList.remove("show");
+  }
+
+  function handleSend() {
+    const text = gastoInput.value.trim();
+    if (!text) return;
+    confirmBox.style.display = "block";
+    toast.classList.remove("show");
+    statusLine.textContent = "Confira e salve:";
+
+    const valor = guessValor(text);
+    const categoria = guessCategory(text);
+    inValor.value = valor !== null ? valor.toFixed(2) : "";
+    catSelect.value = categoria;
+    inDescricao.value = text.slice(0, 80);
+    inData.value = todayISO();
+
+    const ok = valor !== null && valor > 0;
+    saveBtn.disabled = !ok;
+    fieldValor.classList.toggle("error", !ok);
+    valorErr.style.display = !ok ? "block" : "none";
+    if (!ok) statusLine.textContent = "Não achei um valor claro — confirme:";
+  }
+
+  saveBtn.addEventListener("click", async () => {
+    const valor = parseFloat(inValor.value);
+    if (isNaN(valor) || valor <= 0) return;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Salvando…";
+    try {
+      const res = await fetch("/api/gastos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          valor: Math.round(valor * 100) / 100,
+          categoria: catSelect.value,
+          descricao: (inDescricao.value || "").trim().slice(0, 120) || "(sem descrição)",
+          data: inData.value || todayISO(),
+          textoOriginal: gastoInput.value.trim(),
+          nome: myName,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast.classList.add("show");
+      setTimeout(resetComposer, 900);
+      await loadEntries();
+    } catch (e) {
+      statusLine.textContent = "Não deu para salvar agora — tente de novo em instantes.";
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Salvar gasto";
+    }
+  });
+
+  function availableMonths() {
+    const set = new Set(entries.map((e) => monthKey(e.data)));
+    set.add(monthKey(todayISO()));
+    return Array.from(set).sort().reverse();
+  }
+
+  function rebuildMonthSelect() {
+    const months = availableMonths();
+    const prevValue = selectedMonth;
+    monthSelect.innerHTML = "";
+    months.forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m === monthKey(todayISO()) ? "Este mês" : monthLabel(m);
+      monthSelect.appendChild(opt);
+    });
+    const optAll = document.createElement("option");
+    optAll.value = "all"; optAll.textContent = "Todo período";
+    monthSelect.appendChild(optAll);
+
+    if (prevValue === "current") { monthSelect.value = monthKey(todayISO()); selectedMonth = monthSelect.value; }
+    else if (months.includes(prevValue) || prevValue === "all") monthSelect.value = prevValue;
+    else { monthSelect.value = monthKey(todayISO()); selectedMonth = monthSelect.value; }
+  }
+  monthSelect.addEventListener("change", () => { selectedMonth = monthSelect.value; render(); });
+
+  async function deleteEntry(id) {
+    const res = await fetch("/api/gastos/" + id, { method: "DELETE" });
+    if (res.ok || res.status === 204) await loadEntries();
+  }
+
+  function render() {
+    const filtered = selectedMonth === "all" ? entries.slice() : entries.filter((e) => monthKey(e.data) === selectedMonth);
+    filtered.sort((a, b) => (b.data || "").localeCompare(a.data || "") || new Date(b.criadoEm) - new Date(a.criadoEm));
+
+    const total = filtered.reduce((s, e) => s + (Number(e.valor) || 0), 0);
+    document.getElementById("heroTotal").textContent = fmtBRL(total);
+    document.getElementById("heroSub").textContent =
+      (selectedMonth === "all"
+        ? filtered.length + (filtered.length === 1 ? " lançamento" : " lançamentos") + " no total"
+        : filtered.length + (filtered.length === 1 ? " lançamento" : " lançamentos") + " em " + monthLabel(selectedMonth === "current" ? monthKey(todayISO()) : selectedMonth));
+
+    const byCat = {};
+    filtered.forEach((e) => { byCat[e.categoria] = (byCat[e.categoria] || 0) + (Number(e.valor) || 0); });
+    const catEntries = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+    const breakdownBox = document.getElementById("breakdownBox");
+    if (!catEntries.length) {
+      breakdownBox.innerHTML = '<div class="empty-state">Sem gastos neste período ainda.</div>';
+    } else {
+      const max = catEntries[0][1] || 1;
+      breakdownBox.innerHTML = catEntries.map(([cat, val]) => {
+        const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+        const w = Math.max(4, Math.round((val / max) * 100));
+        return '<div class="cat-row"><div class="cat-top"><span class="name">' + escapeHtml(cat) + '</span><span class="val">' + fmtBRL(val) + ' · ' + pct + '%</span></div><div class="bar-bg"><div class="bar-fill" style="width:' + w + '%"></div></div></div>';
+      }).join("");
+    }
+
+    const ledgerBox = document.getElementById("ledgerBox");
+    if (!filtered.length) {
+      ledgerBox.innerHTML = '<div class="empty-state">Nenhum gasto registrado ainda. Escreva o primeiro acima ↑</div>';
+      return;
+    }
+    const groups = [];
+    let lastDay = null, curGroup = null;
+    filtered.forEach((e) => {
+      if (e.data !== lastDay) { curGroup = { data: e.data, items: [] }; groups.push(curGroup); lastDay = e.data; }
+      curGroup.items.push(e);
+    });
+    ledgerBox.innerHTML = groups.map((g) => {
+      const rows = g.items.map((e) => {
+        const st = catStyle(e.categoria);
+        const who = e.nome || "Alguém";
+        return '<div class="entry" data-id="' + e.id + '">' +
+          '<span class="tag" style="background:' + st.bg + ';color:' + st.fg + '">' + escapeHtml(e.categoria) + '</span>' +
+          '<div class="mid"><div class="desc">' + escapeHtml(e.descricao || "") + '</div><div class="who">' + escapeHtml(who) + '</div></div>' +
+          '<div class="val">' + fmtBRL(e.valor) + '</div>' +
+          '<button class="del" data-del="' + e.id + '" title="Excluir">✕</button>' +
+        '</div>';
+      }).join("");
+      return '<div class="day-group"><div class="day-label">' + dayLabel(g.data) + '</div>' + rows + '</div>';
+    }).join("");
+
+    ledgerBox.querySelectorAll("[data-del]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (!btn.classList.contains("confirming")) {
+          btn.classList.add("confirming");
+          btn.textContent = "confirmar";
+          setTimeout(() => { btn.classList.remove("confirming"); btn.textContent = "✕"; }, 3000);
+          return;
+        }
+        const id = btn.getAttribute("data-del");
+        btn.disabled = true;
+        deleteEntry(id);
+      });
+    });
+  }
+
+  async function loadEntries() {
+    try {
+      const res = await fetch("/api/gastos");
+      if (!res.ok) throw new Error("falha ao carregar");
+      entries = await res.json();
+    } catch (e) {
+      document.getElementById("ledgerBox").innerHTML = '<div class="empty-state">Não foi possível carregar os gastos agora.</div>';
+      entries = [];
+    }
+    rebuildMonthSelect();
+    render();
+  }
+
+  loadEntries();
+})();
+</script>
+</body>
+</html>
