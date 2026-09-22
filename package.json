@@ -1,0 +1,10 @@
+{
+  "name": "otavio-gastos",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Gestao de gastos pessoais - Otavio",
+  "dependencies": {
+    "@netlify/database": "latest",
+    "@netlify/functions": "latest"
+  }
+}
