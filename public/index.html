@@ -114,7 +114,10 @@
 
   .breakdown { padding: 14px 16px; }
   .cat-row { padding: 9px 0; }
-  .cat-row .cat-top { display: flex; justify-content: space-between; -shadow: var(--shadow); }
+  .cat-row .cat-top { display: flex; justify-content: space-between; }
+  .name-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+  .name-modal-backdrop.show { display: flex; }
+  .name-modal { background: var(--card); border-radius: var(--radius); padding: 20px; max-width: 320px; width: 100%; box-shadow: var(--shadow); }
   .name-modal h3 { margin: 0 0 6px; font-size: 17px; }
   .name-modal p { margin: 0 0 12px; font-size: 13px; color: var(--ink-soft); }
   .name-modal input { width: 100%; border: 1.5px solid var(--line); border-radius: 10px; padding: 10px; font-size: 14.5px; font-family: inherit; background: var(--bg); color: var(--ink); }
